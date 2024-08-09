@@ -94,9 +94,9 @@ export default function Home({
           <h3 className="text-gray-600 mt-4">Please enter a postcode.</h3>
         )}
         {/* Google cloud provide an API to access their maps package - 
-        API key should be in an .env for security and privacy however in this case I attached it as public for the demo */}
+        API key should be in an .env for security and privacy - development map package shown here */}
         {markerLocation && (
-          <APIProvider apiKey={"AIzaSyC2c1jtHA78RGe9_lLYPjf-aLv7RlthMnM"}>
+          <APIProvider apiKey={process.env.MAPSAPIKEY || ""}>
             <CustomMap markerLocation={markerLocation} />
           </APIProvider>
         )}
