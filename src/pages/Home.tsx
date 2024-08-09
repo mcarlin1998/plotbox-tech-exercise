@@ -1,11 +1,17 @@
-import { Dispatch, SetStateAction, useState } from "react";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { PostCodeDataProps } from "../types";
+import { APIProvider } from "@vis.gl/react-google-maps";
+import CustomMap from "../components/CustomMap";
 
+//Type check for props
 interface HomeProps {
   postCodeData: PostCodeDataProps | null;
   setPostCodeSearch: Dispatch<SetStateAction<string>>;
   postCodeSearch: string;
   getPostCodeData: () => void;
+  error: string | null;
+  setError: Dispatch<SetStateAction<string | null>>;
+  markerLocation: { lat: string; lng: string } | null;
 }
 
 export default function Home({
@@ -13,9 +19,11 @@ export default function Home({
   setPostCodeSearch,
   postCodeSearch,
   getPostCodeData,
+  error,
+  setError,
+  markerLocation,
 }: HomeProps) {
   const [loading, setLoading] = useState<boolean>(false); // State for loading status
-  const [error, setError] = useState<string | null>(null); // State for error messages
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     setPostCodeSearch(e.target.value);
@@ -30,56 +38,69 @@ export default function Home({
     try {
       await getPostCodeData(); // Trigger the API call with the current search term
     } catch (err) {
-      setError("Failed to fetch data. Please try again."); // Handle errors
+      console.log("this try");
+      //   setError("Failed to fetch data. Please try again."); // Handle errors
     } finally {
       setLoading(false); // Set loading state back to false
     }
   }
-
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 p-4">
-      <form
-        onSubmit={handleSubmit}
-        className="w-full max-w-md bg-white shadow-md rounded-lg p-6"
-      >
-        <div className="mb-4">
-          <input
-            value={postCodeSearch}
-            onChange={handleChange}
-            placeholder="Enter postcode"
-            disabled={loading} // Disable input while loading
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
-        <button
-          type="submit"
-          disabled={loading}
-          className={`w-full py-2 px-4 rounded-lg text-white ${
-            loading ? "bg-blue-400" : "bg-blue-600 hover:bg-blue-700"
-          }`}
-        >
-          {loading ? "Searching..." : "Search"}
-        </button>
-      </form>
+    // Styling is with tailwindcss for speed
+    <div className="min-h-screen flex flex-col bg-gray-100 p-4">
+      {/* Fixed or Sticky Input Form at the Top */}
+      <div className="w-full max-w-md mx-auto sticky top-0 bg-white shadow-md rounded-lg p-6 z-10">
+        <form onSubmit={handleSubmit} className="w-full">
+          <div className="mb-4">
+            <input
+              value={postCodeSearch}
+              onChange={handleChange}
+              placeholder="Enter postcode"
+              disabled={loading} // Disable input while loading
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={loading}
+            className={`w-full py-2 px-4 rounded-lg text-white ${
+              loading ? "bg-blue-400" : "bg-blue-600 hover:bg-blue-700"
+            }`}
+          >
+            {loading ? "Searching..." : "Search"}
+          </button>
+        </form>
+      </div>
 
-      {loading && <p className="text-blue-600 mt-4">Loading data...</p>}
+      {/* Main Content */}
+      <div className="flex flex-col items-center justify-center flex-grow">
+        {loading && <p className="text-blue-600 mt-4">Loading data...</p>}
 
-      {error && <p className="text-red-600 mt-4">{error}</p>}
+        {error && <p className="text-red-600 mt-4">{error}</p>}
 
-      {postCodeData ? (
-        <div className="mt-8 w-full max-w-md bg-white shadow-md rounded-lg p-6">
-          <h3 className="text-xl font-semibold mb-2">{postCodeData.country}</h3>
-          <h3 className="text-lg mb-1">{postCodeData.constituency}</h3>
-          <h3 className="text-lg mb-1">{postCodeData.district}</h3>
-          <h3 className="text-lg mb-1">{postCodeData.town}</h3>
-        </div>
-      ) : !loading && !error ? (
-        <h3 className="text-gray-600 mt-4">
-          No data found for the given postcode.
-        </h3>
-      ) : (
-        <h3 className="text-gray-600 mt-4">Please enter a postcode.</h3>
-      )}
+        {postCodeData ? (
+          <div className="mb-4 w-full max-w-md bg-white shadow-md rounded-lg p-6">
+            <h3 className="text-xl font-semibold mb-2">
+              {postCodeData.country}
+            </h3>
+            <h3 className="text-lg mb-1">{postCodeData.constituency}</h3>
+            <h3 className="text-lg mb-1">{postCodeData.district}</h3>
+            <h3 className="text-lg mb-1">{postCodeData.town}</h3>
+          </div>
+        ) : !loading && !error ? (
+          <h3 className="text-gray-600 mt-4">
+            No data found for the given postcode.
+          </h3>
+        ) : (
+          <h3 className="text-gray-600 mt-4">Please enter a postcode.</h3>
+        )}
+        {/* Google cloud provide an API to access their maps package - 
+        API key should be in an .env for security and privacy however in this case I attached it as public for the demo */}
+        {markerLocation && (
+          <APIProvider apiKey={"AIzaSyC2c1jtHA78RGe9_lLYPjf-aLv7RlthMnM"}>
+            <CustomMap markerLocation={markerLocation} />
+          </APIProvider>
+        )}
+      </div>
     </div>
   );
 }
